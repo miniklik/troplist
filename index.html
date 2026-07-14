@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Otwórz mapę</title>
+<style>
+  :root{ --zloto:#4dff88; }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+    background:#000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  }
+  canvas{position:fixed;inset:0;display:block}
+
+  .karta{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    z-index:10;width:min(90vw,380px);
+    background:rgba(0,10,0,0.82);
+    border:1.5px solid var(--zloto);
+    border-radius:16px;
+    padding:34px 28px;
+    text-align:center;
+    box-shadow:0 0 40px rgba(77,255,136,0.35), 0 20px 60px rgba(0,0,0,0.8);
+    backdrop-filter:blur(3px);
+    animation:wjazd 0.6s cubic-bezier(.2,.85,.25,1);
+  }
+  @keyframes wjazd{
+    from{opacity:0;transform:translate(-50%,-50%) scale(0.85)}
+    to{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  }
+
+  .ikona{font-size:40px;margin-bottom:10px}
+  h1{color:#eafff2;font-size:20px;font-weight:700;margin:0 0 8px}
+  p.opis{color:#8fd9a8;font-size:14px;line-height:1.5;margin:0 0 22px}
+  p.opis b{color:var(--zloto)}
+
+  .adres-box{
+    background:rgba(77,255,136,0.08);
+    border:1px dashed rgba(77,255,136,0.4);
+    border-radius:8px;
+    padding:12px 14px;
+    color:var(--zloto);
+    font-size:14px;
+    word-break:break-all;
+    margin-bottom:18px;
+  }
+  .btn{
+    display:block;width:100%;border:none;border-radius:10px;
+    padding:15px;font-family:inherit;font-size:15.5px;font-weight:700;
+    cursor:pointer;transition:all 0.15s;
+  }
+  .btn-glowny{
+    background:var(--zloto);color:#001a08;
+    box-shadow:0 0 20px rgba(77,255,136,0.5);
+  }
+  .btn-glowny:hover{background:#6fffa3;box-shadow:0 0 28px rgba(77,255,136,0.7)}
+  .btn-glowny:active{transform:scale(0.97)}
+
+  .stan{font-size:13px;color:var(--zloto);height:20px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<canvas id="matrix"></canvas>
+
+<div class="karta">
+  <div class="ikona">🔗</div>
+  <h1>Skopiuj adres mapy</h1>
+  <p class="opis"><b>Uwaga!</b> Przeglądarka FB blokuje dźwięk i GPS. Otwórz mapę w Chrome lub Safari.</p>
+
+  <div class="adres-box" id="adresBox">https://mini-klik.pl/moje-mapy/mapa3/</div>
+
+  <button class="btn btn-glowny" id="btnKopiuj" onclick="kopiujAdres()">Kopiuj adres</button>
+  <div class="stan" id="stan"></div>
+</div>
+
+<script>
+// =====================================================================
+// TU WPISZ ADRES SWOJEJ MAPY - to jedyna rzecz do zmiany w tym pliku.
+const ADRES_MAPY = 'https://mini-klik.pl/moje-mapy/mapa3/';
+// =====================================================================
+
+document.getElementById('adresBox').textContent = ADRES_MAPY;
+
+function kopiujAdres() {
+  const btn = document.getElementById('btnKopiuj');
+  const stan = document.getElementById('stan');
+  const gotowy = () => {
+    btn.textContent = '✓ Skopiowano';
+    stan.textContent = 'Teraz wklej w przeglądarce';
+    setTimeout(() => { btn.textContent = 'Kopiuj adres'; stan.textContent = ''; }, 2500);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(ADRES_MAPY).then(gotowy).catch(() => {
+      prompt('Skopiuj ręcznie ten adres:', ADRES_MAPY);
+    });
+  } else {
+    prompt('Skopiuj ręcznie ten adres:', ADRES_MAPY);
+  }
+}
+
+// --- Animacja Matrix (canvas, płynna, lekka) ---
+const canvas = document.getElementById('matrix');
+const ctx = canvas.getContext('2d');
+let w, h, kolumny, krople;
+const znaki = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789アイウエオカキクケコサシスセソタチツテト';
+
+function ustawRozmiar() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+  const rozmiarCzcionki = 16;
+  kolumny = Math.floor(w / rozmiarCzcionki);
+  krople = new Array(kolumny).fill(1);
+}
+ustawRozmiar();
+window.addEventListener('resize', ustawRozmiar);
+
+function rysuj() {
+  ctx.fillStyle = 'rgba(0,0,0,0.06)';
+  ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = '#4dff88';
+  ctx.font = '16px monospace';
+  for (let i = 0; i < krople.length; i++) {
+    const znak = znaki[Math.floor(Math.random() * znaki.length)];
+    ctx.fillText(znak, i * 16, krople[i] * 16);
+    if (krople[i] * 16 > h && Math.random() > 0.975) krople[i] = 0;
+    krople[i]++;
+  }
+}
+setInterval(rysuj, 45);
+</script>
+
+</body>
+</html>
